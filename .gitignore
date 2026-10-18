@@ -1,0 +1,35 @@
+# Dependencies and package-manager state
+node_modules/
+.pnpm-store/
+.npm/
+.npmrc
+
+# Local secrets. MCD_MCP_TOKEN belongs in the launch environment, not in a file.
+.env
+.env.*
+!.env.example
+
+# Logs, coverage, and test artifacts
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+logs/
+coverage/
+.nyc_output/
+
+# Build output (none today; keep generated folders out)
+dist/
+build/
+
+# Editor and OS noise
+.DS_Store
+._*
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+*.orig
+*.rej
+*.tmp

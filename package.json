@@ -1,0 +1,31 @@
+{
+  "name": "@local/mcd-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "McDonald's China MCP for DeepSeek Harness: native Streamable HTTP connection, runtime tool discovery, and a bundled safety skill. Requires MCD_MCP_TOKEN in the Harness launch environment; the token is never stored in configuration.",
+  "author": {
+    "name": "zhihaofans",
+    "url": "https://github.com/zhihaofans"
+  },
+  "homepage": "https://github.com/zhihaofans",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "skills/**/*.md",
+    "README.md",
+    "scripts/*.sh"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

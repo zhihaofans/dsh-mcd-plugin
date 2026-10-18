@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="McDonald's China MCP">
+  <rect width="64" height="64" rx="14" fill="#7a1f1f"/>
+  <path d="M14 27c0-7.2 8-12 18-12s18 4.8 18 12" fill="#f6c453"/>
+  <rect x="14" y="29" width="36" height="5" rx="2.5" fill="#5bbf7a"/>
+  <rect x="14" y="36" width="36" height="6" rx="2" fill="#8b3a2a"/>
+  <path d="M14 44h36c0 3-2.2 5-5 5H19c-2.8 0-5-2-5-5Z" fill="#f6c453"/>
+  <circle cx="50" cy="14" r="7" fill="#3aa0ff"/>
+  <path d="M47 14h6M50 11v6" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+</svg>

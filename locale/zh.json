@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "麦当劳中国 MCP（mcd-mcp）",
+    "description": "通过原生 MCP 客户端连接 https://mcp.mcd.cn，运行时动态发现菜单、算价、优惠券与订单工具。需要在 Harness 启动环境中设置 MCD_MCP_TOKEN，token 不会写入配置。"
+  }
+}

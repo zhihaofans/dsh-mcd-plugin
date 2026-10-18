@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "McDonald's China MCP (mcd-mcp)",
+    "description": "Connects https://mcp.mcd.cn through the native MCP client so menu, pricing, coupon and order tools are discovered at runtime. Requires MCD_MCP_TOKEN in the Harness launch environment; the token is never stored in configuration."
+  }
+}

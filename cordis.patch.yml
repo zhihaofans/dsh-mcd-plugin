@@ -1,0 +1,29 @@
+# DeepSeek Harness bundle: McDonald's China MCP (mcd-mcp).
+#
+# Two rows are inserted into the active profile:
+#   1. mcd-mcp-skill — this package's Host half, which registers the bundled
+#      SKILL.md through ctx.skills.registerProvider. It contains no secret and
+#      always mounts, so the agent can explain setup even when the MCP server
+#      is not connected.
+#   2. mcd-mcp       — the shipped native MCP client bridge. Its tools are
+#      discovered at runtime; this patch contains no tool list.
+#
+# MCD_MCP_TOKEN is read from the Harness *launch* environment. The Loader
+# builds the Authorization value at mount time, so no token is written to this
+# file, the profile, or the repository. The row stays disabled (fail closed)
+# while the variable is absent; set it and restart the Harness to connect.
+- insert:
+    - id: mcd-mcp-skill
+      name: '@local/mcd-mcp'
+      config: {}
+
+    - id: mcd-mcp
+      name: '@deepseek-ai/dsh-mcp-client'
+      disabled: !!js '!process.env.MCD_MCP_TOKEN'
+      config:
+        serverName: mcd-mcp
+        transport: streamable-http
+        url: 'https://mcp.mcd.cn'
+        headers:
+          Authorization: !!js '`Bearer ${process.env.MCD_MCP_TOKEN}`'
+        failOnStartupError: true
