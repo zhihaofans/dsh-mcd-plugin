@@ -17,12 +17,12 @@ description: 麦当劳中国 MCP 点餐技能。用于查门店/菜单、算价�
 
 - **没有这些工具时，不要编造工具名、不要假装调用成功，也不要用通用 HTTP
   请求绕过 Harness 的 MCP 客户端。** 直接告诉用户 MCP 尚未连接，并给出排查步骤：
-  1. 确认启动 DeepSeek Harness 的环境里有 `MCD_MCP_TOKEN`（token 从
-     https://open.mcd.cn/mcp 控制台获取）。它必须存在于 Harness 的**启动环境**，
-     不是写进 `cordis.patch.yml` 或本技能文件。
-  2. 在 Harness 的 Plugins 页面查看 `mcd-mcp` 行：`MCD_MCP_TOKEN` 缺失时该行
-     会被有意禁用；token 无效时连接会失败并记录错误。
-  3. 设置/更新 token 后重启 Harness（或重新挂载该 bundle），再发起新会话。
+  1. 让用户在 Harness 的 **Plugins → mcd-mcp** 配置里填写 `MCD_MCP_TOKEN`
+     （token 从 https://open.mcd.cn/mcp 控制台获取）；也可以使用 Harness 启动
+     环境中的同名变量。不要在聊天里向用户索要 token。
+  2. 查看 `mcd-mcp` 行：两个来源都没有 token 时该行会被有意禁用；token 无效时
+     连接会失败并记录错误。
+  3. 保存/更新 token 后重启 Harness（或重新挂载该 bundle），再发起新会话。
   4. 仍然失败时，让用户检查网络/代理和 token 是否过期；不要用猜测的 token 重试。
 - 工具存在但缺少某个操作时，说明服务端当前没有暴露它（工具列表会变化）；
   如实告知，不要臆造替代名称。
@@ -119,13 +119,14 @@ description: 麦当劳中国 MCP 点餐技能。用于查门店/菜单、算价�
 
 ## 认证与隐私
 
-- Token 从 https://open.mcd.cn/mcp 控制台获取，由 Harness 启动环境中的
-  `MCD_MCP_TOKEN` 提供；`cordis.patch.yml` 只通过 `!!js` 在挂载时拼出
-  `Authorization: Bearer ...`，不保存明文。
+- Token 从 https://open.mcd.cn/mcp 控制台获取。优先在 Harness 的 Plugins 设置里
+  填写（volatile secret，UI 脱敏，保存在本机 profile，不写入本仓库）；也可以
+  使用启动环境中的 `MCD_MCP_TOKEN`。`cordis.patch.yml` 只通过 `!!js` 在挂载时
+  拼出 `Authorization: Bearer ...`。
 - 不要读取、回显、截取或记录 token 的任何部分；不要在回答、文件、命令参数或
   日志中输出它。
-- 用户索要 token 时拒绝，并指向控制台。401/403 时让用户更新启动环境中的
-  `MCD_MCP_TOKEN` 后重启 Harness，不要用猜测的 token 重试。
+- 用户索要 token 时拒绝，并指向控制台。401/403 时让用户在 Plugins 设置中更新
+  token（或更新启动环境）后重启 Harness，不要用猜测的 token 重试。
 
 ## 典型流程
 
@@ -158,4 +159,4 @@ description: 麦当劳中国 MCP 点餐技能。用于查门店/菜单、算价�
 - 未经用户明确确认调用 `create-order`、`auto-bind-coupons` 等写工具。
 - 混淆分/元、静默换算、或把未知单位当成元。
 - 高频并发、无限重试、绕过 429 退避。
-- 在任何输出中暴露 `MCD_MCP_TOKEN`，或把它写进配置文件、插件源码或仓库。
+- 在任何输出中暴露 `MCD_MCP_TOKEN`，或把它写进插件源码、仓库或回答。

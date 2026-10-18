@@ -4,13 +4,20 @@ import { dirname, join } from 'node:path'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 
-import { apply, inject, name } from '../index.js'
+// Capture a deterministic launch fallback before ../index.js is evaluated.
+process.env.MCD_MCP_TOKEN = 'launch-token'
+const { Config, apply, inject, name } = await import('../index.js')
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
 
-function registerWithFakeContext() {
+function fakeContext() {
   let factory
+  const disposers = []
   const ctx = {
+    effect(fn) {
+      const dispose = fn()
+      if (typeof dispose === 'function') disposers.push(dispose)
+    },
     skills: {
       registerProvider(create) {
         factory = create
@@ -18,9 +25,27 @@ function registerWithFakeContext() {
       },
     },
   }
-  apply(ctx)
-  assert.equal(typeof factory, 'function', 'apply() must register exactly one provider')
-  return factory({ signal: undefined, invalidate() {} })
+  return {
+    ctx,
+    provider() {
+      assert.equal(typeof factory, 'function', 'apply() must register exactly one provider')
+      return factory({ signal: undefined, invalidate() {} })
+    },
+    cleanup() {
+      for (const dispose of disposers.splice(0)) dispose()
+    },
+  }
+}
+
+function withPlugin(config, run) {
+  process.env.MCD_MCP_TOKEN = 'launch-token'
+  const harness = fakeContext()
+  apply(harness.ctx, config)
+  try {
+    return run(harness.provider())
+  } finally {
+    harness.cleanup()
+  }
 }
 
 test('plugin identity declares the skills injection', () => {
@@ -28,8 +53,44 @@ test('plugin identity declares the skills injection', () => {
   assert.deepEqual(inject, ['skills'])
 })
 
+test('Config exposes a volatile secret token field', () => {
+  const field = Config.dict.token
+  assert.equal(field.type, 'string')
+  assert.equal(field.meta.role, 'secret')
+  assert.equal(field.meta.volatile, true)
+  assert.match(field.meta.description, /open\.mcd\.cn\/mcp/)
+  assert.equal(Config({}).token.get(), '')
+  assert.equal(Config({ token: 'abc' }).token.get(), 'abc')
+})
+
+test('a configured token is published for the MCP row', () => {
+  withPlugin({ token: 'config-token' }, (provider) => {
+    assert.equal(process.env.MCD_MCP_TOKEN, 'config-token')
+    assert.equal(provider.name, 'mcd-mcp')
+  })
+  assert.equal(process.env.MCD_MCP_TOKEN, 'launch-token')
+})
+
+test('a validated volatile token reference is published', () => {
+  withPlugin({ token: { get: () => 'volatile-token' } }, (provider) => {
+    assert.equal(process.env.MCD_MCP_TOKEN, 'volatile-token')
+    assert.equal(provider.name, 'mcd-mcp')
+  })
+  assert.equal(process.env.MCD_MCP_TOKEN, 'launch-token')
+})
+
+test('an empty setting falls back to the launch token', () => {
+  withPlugin({ token: '   ' }, (provider) => {
+    assert.equal(provider.name, 'mcd-mcp')
+    assert.equal(process.env.MCD_MCP_TOKEN, 'launch-token')
+  })
+  assert.equal(process.env.MCD_MCP_TOKEN, 'launch-token')
+})
+
 test('provider publishes the bundled skill and loads its body', async () => {
-  const provider = registerWithFakeContext()
+  const provider = await new Promise((resolve) => {
+    withPlugin({}, (registered) => resolve(registered))
+  })
   assert.equal(provider.name, 'mcd-mcp')
 
   const candidates = await provider.list()
@@ -70,14 +131,21 @@ test('patch uses the native client, env gate, and no literal token', () => {
   assert.doesNotMatch(patch, /Bearer (?!\$\{)/)
 })
 
-test('package metadata exports the runtime, locales, and icon', () => {
+test('package metadata exports the runtime, locales, icon, and dependency', () => {
   const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'))
   assert.equal(pkg.dsh.bundle.patch, './cordis.patch.yml')
   assert.equal(pkg.exports['.'], './index.js')
+  assert.equal(pkg.exports['./client'], './client.js')
+  assert.ok(pkg.files.includes('client.js'))
+  assert.equal(pkg.dsh.client.platform, 'web')
+  assert.equal(pkg.dsh.client.immediately, true)
+  assert.ok(pkg.dsh.client.inject.includes('@deepseek-ai/dsh-client-ui-plugin-manager'))
+  assert.ok(pkg.dsh.client.inject.includes('@deepseek-ai/dsh-client-locale'))
   assert.equal(pkg.author.name, 'zhihaofans')
   assert.equal(pkg.author.url, 'https://github.com/zhihaofans')
   assert.equal(pkg.homepage, 'https://github.com/zhihaofans')
   assert.ok(pkg.files.includes('skills/**/*.md'))
+  assert.match(pkg.dependencies['@deepseek-ai/schemastery'], /3\.18\.5/)
   for (const locale of ['en', 'zh']) {
     const meta = JSON.parse(readFileSync(join(ROOT, 'locale', `${locale}.json`), 'utf8')).meta
     assert.ok(meta.title.length > 0)

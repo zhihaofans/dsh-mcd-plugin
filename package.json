@@ -2,7 +2,7 @@
   "name": "@local/mcd-mcp",
   "version": "0.1.0",
   "private": true,
-  "description": "McDonald's China MCP for DeepSeek Harness: native Streamable HTTP connection, runtime tool discovery, and a bundled safety skill. Requires MCD_MCP_TOKEN in the Harness launch environment; the token is never stored in configuration.",
+  "description": "McDonald's China MCP for DeepSeek Harness: native Streamable HTTP connection, runtime tool discovery, and a bundled safety skill. Set MCD_MCP_TOKEN in Plugins settings or the Harness launch environment; the token is never stored in this repository.",
   "author": {
     "name": "zhihaofans",
     "url": "https://github.com/zhihaofans"
@@ -11,11 +11,13 @@
   "type": "module",
   "exports": {
     ".": "./index.js",
+    "./client": "./client.js",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg"
   },
   "files": [
     "index.js",
+    "client.js",
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
@@ -26,6 +28,17 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-plugin-manager",
+        "@deepseek-ai/dsh-client-locale"
+      ]
     }
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "~3.18.5"
   }
 }
